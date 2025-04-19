@@ -16,7 +16,6 @@ if (!isset($_GET['id'])) {
 
 $db = new Database();
 $cliente = $db->getClientById($_GET['id']);
-$descuentos = $db->getDescuentosDisponibles($cliente['coupon_code']);
 
 // Si se está marcando un descuento como usado o revertiendo
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -39,9 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tipo_mensaje = "danger";
         }
     }
-    // Recargar los descuentos después de cualquier acción
-    $descuentos = $db->getDescuentosDisponibles($cliente['coupon_code']);
 }
+
+// Cargar los descuentos una sola vez
+$descuentos = $db->getDescuentosDisponibles($cliente['coupon_code']);
 
 // Verificar si todos los descuentos están usados
 $todos_usados = true;

@@ -98,6 +98,17 @@ $descuentos = $db->getDescuentosDisponibles($cliente['coupon_code']);
                                 <?php echo $cliente['coupon_code']; ?>
                             </div>
                             <p class="text-muted small">Guarda este código, lo necesitarás para reclamar tus beneficios en Tienda Milenium</p>
+                            
+                            <!-- Botón de descarga opcional -->
+                            <div class="mt-4">
+                                <a href="descargar_cupon.php?uuid=<?php echo $uuid; ?>" class="btn btn-outline-primary">
+                                    <i class="fas fa-file-pdf"></i> Descargar mis beneficios en PDF
+                                </a>
+                                <div class="text-muted small mt-2">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Puedes descargar tus beneficios para consultarlos sin conexión a internet
+                                </div>
+                            </div>
                         </div>
 
                         <h3 class="mb-4">Tus Beneficios Exclusivos:</h3>
