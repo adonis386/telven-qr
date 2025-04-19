@@ -30,7 +30,7 @@ class Database {
                 $this->conn->exec("
                     CREATE TABLE IF NOT EXISTS descuentos_tipos (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        nombre VARCHAR(100) NOT NULL,
+                        nombre VARCHAR(100) NOT NULL UNIQUE,
                         descripcion TEXT,
                         monto DECIMAL(10,2) NOT NULL,
                         condiciones TEXT
@@ -44,37 +44,44 @@ class Database {
                         tipo_descuento_id INT NOT NULL,
                         usado BOOLEAN DEFAULT FALSE,
                         fecha_uso DATETIME,
-                        FOREIGN KEY (tipo_descuento_id) REFERENCES descuentos_tipos(id)
+                        FOREIGN KEY (tipo_descuento_id) REFERENCES descuentos_tipos(id),
+                        UNIQUE KEY unique_cupon_descuento (cupon_id, tipo_descuento_id)
                     )
                 ");
 
-                // Insertar los tipos de descuentos predefinidos con condiciones específicas
-                $this->conn->exec("
-                    INSERT INTO descuentos_tipos (nombre, descripcion, monto, condiciones) VALUES
-                    ('Chip Gratuito', 'Chip completamente gratis para tu línea telefónica', 0, 'No aplican condiciones adicionales'),
-                    
-                    ('Accesorios', 'Descuento en línea de accesorios (excepto productos Cubitt)', 3, 'Válido para todos los accesorios excepto productos de marca Cubitt'),
-                    
-                    ('Productos Cubitt Seleccionados', 'Descuento exclusivo en productos seleccionados de la marca Cubitt', 5, 'Aplica únicamente para:\n- Relojes Cubitt\n- Cornetas Cubitt\n- Balanza Cubitt'),
-                    
-                    ('Equipos Internet', 'Descuento en equipos de internet', 5, 'Válido para todos los equipos de internet disponibles'),
-                    
-                    ('Teléfonos Gama Baja', 'Descuento en teléfonos gama baja', 3, 'Aplica para teléfonos con precio menor a $100'),
-                    
-                    ('Teléfonos Gama Alta', 'Descuento en teléfonos gama alta seleccionados', 5, 'Condiciones:\n- Solo aplica en compras mayores a $200\n- No acumulable con otras promociones\n- No aplica para iPhone\n- Consultar modelos participantes en tienda')
-                ");
+                // Insertar los tipos de descuentos predefinidos solo si no existen
+                $descuentos = [
+                    ['Chip Gratuito', 'Chip completamente gratis para tu línea telefónica', 0, 'No aplican condiciones adicionales'],
+                    ['Accesorios', 'Descuento en línea de accesorios (excepto productos Cubitt)', 3, 'Válido para todos los accesorios excepto productos de marca Cubitt'],
+                    ['Productos Cubitt Seleccionados', 'Descuento exclusivo en productos seleccionados de la marca Cubitt', 5, 'Aplica únicamente para:\n- Relojes Cubitt\n- Cornetas Cubitt\n- Balanza Cubitt'],
+                    ['Equipos Internet', 'Descuento en equipos de internet', 5, 'Válido para todos los equipos de internet disponibles'],
+                    ['Teléfonos Gama Baja', 'Descuento en teléfonos gama baja', 3, 'Aplica para teléfonos con precio menor a $100'],
+                    ['Teléfonos Gama Alta', 'Descuento en teléfonos gama alta seleccionados', 5, 'Condiciones:\n- Solo aplica en compras mayores a $200\n- No acumulable con otras promociones\n- No aplica para iPhone\n- Consultar modelos participantes en tienda']
+                ];
+
+                $stmt = $this->conn->prepare("INSERT IGNORE INTO descuentos_tipos (nombre, descripcion, monto, condiciones) VALUES (?, ?, ?, ?)");
+                
+                foreach ($descuentos as $descuento) {
+                    $stmt->execute($descuento);
+                }
             }
 
             // Obtener los descuentos y su estado para el cupón
             $stmt = $this->conn->prepare("
-                SELECT 
-                    dt.*,
+                SELECT DISTINCT
+                    dt.id,
+                    dt.nombre,
+                    dt.descripcion,
+                    dt.monto,
+                    dt.condiciones,
                     COALESCE(cd.usado, FALSE) as usado,
                     cd.fecha_uso
                 FROM descuentos_tipos dt
-                LEFT JOIN cupones_descuentos cd 
-                    ON dt.id = cd.tipo_descuento_id 
-                    AND cd.cupon_id = :cupon_code
+                LEFT JOIN (
+                    SELECT tipo_descuento_id, usado, fecha_uso 
+                    FROM cupones_descuentos 
+                    WHERE cupon_id = :cupon_code
+                ) cd ON dt.id = cd.tipo_descuento_id
                 ORDER BY dt.id ASC
             ");
             
@@ -208,6 +215,35 @@ class Database {
             return $stmt->execute();
         } catch(PDOException $e) {
             throw new Exception("Error al usar cupón: " . $e->getMessage());
+        }
+    }
+
+    // Nuevo método para actualizar cliente
+    public function updateClient($id, $nombre, $email, $telefono, $tipo_documento, $numero_documento, $estado) {
+        try {
+            $sql = "UPDATE clientes 
+                    SET nombre = :nombre,
+                        email = :email,
+                        telefono = :telefono,
+                        tipo_documento = :tipo_documento,
+                        numero_documento = :numero_documento,
+                        estado = :estado,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = :id";
+                    
+            $stmt = $this->conn->prepare($sql);
+            
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':nombre', $nombre);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':telefono', $telefono);
+            $stmt->bindParam(':tipo_documento', $tipo_documento);
+            $stmt->bindParam(':numero_documento', $numero_documento);
+            $stmt->bindParam(':estado', $estado);
+            
+            return $stmt->execute();
+        } catch(PDOException $e) {
+            throw new Exception("Error al actualizar el cliente: " . $e->getMessage());
         }
     }
 
