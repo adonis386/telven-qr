@@ -3,7 +3,7 @@ require_once 'phpqrcode/qrlib.php';
 require_once 'includes/functions.php';
 
 // IP fija del servidor
-$server_ip = '192.168.250.8';
+$server_ip = '192.168.0.169';
 
 // Verificar si hay un UUID en uso
 $last_uuid_file = 'temp/last_uuid.txt';

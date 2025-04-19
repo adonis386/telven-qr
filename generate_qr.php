@@ -5,7 +5,7 @@ require_once 'phpqrcode/qrlib.php';
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
 
 // URL base de la aplicación con nuevo_registro=true
-$baseUrl = $protocol . $_SERVER['HTTP_HOST'] . "/tiendaqr/procesar.php?nuevo_registro=true";
+$baseUrl = $protocol . "192.168.0.169" . "/telven-qr/procesar.php?nuevo_registro=true";
 
 // Asegurarse de que existe el directorio para el QR
 if (!file_exists('assets/qr')) {

@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', '9XfObH!w7G[J9m0c');
+define('DB_PASS', 'admin');
 define('DB_NAME', 'telvenqr');
 
 // Función para verificar la conexión a la base de datos
